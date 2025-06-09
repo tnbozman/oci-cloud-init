@@ -1,0 +1,37 @@
+#cloud-config
+write_files:
+  - path: /etc/sudoers.d/developers
+    permissions: '0440'
+    owner: root:root
+    content: |
+      %developers ALL=(ALL) NOPASSWD: /usr/sbin/ip, /usr/sbin/ifconfig
+users:
+ - default
+ - name: {{ cookiecutter.username }}
+   groups: {{ cookiecutter.user_groups }}
+   ssh_authorized_keys:
+      - {{ cookiecutter.user_public_key }}
+   shell: /bin/bash
+ - name: {{ cookiecutter.admin_username }}
+   sudo: ALL=(ALL) NOPASSWD:ALL
+   passwd: {{ cookiecutter.admin_password }}
+   lock_passwd: false
+   shell: /bin/bash
+runcmd:
+ # Ensure the root volume is expanded
+ - sudo dd iflag=direct if=/dev/oracleoci/oraclevda of=/dev/null count=1
+ - echo "1" | sudo tee /sys/class/block/`readlink /dev/oracleoci/oraclevda | cut -d'/' -f 2`/device/rescan
+ - sudo /usr/libexec/oci-growfs -y
+ # System updates and package installation
+ - sudo dnf update -y
+ - sudo dnf upgrade -y
+ - sudo dnf install -y oracle-cloud-agent uptrack
+ - sudo systemctl enable --now oracle-cloud-agent 
+ # Install Docker Compose
+ - sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+ - sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+ - sudo systemctl enable --now docker
+ - sudo groupadd docker
+ - sudo usermod -aG docker {{ cookiecutter.username }}
+ - newgrp docker
+

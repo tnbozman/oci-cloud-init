@@ -1,0 +1,8 @@
+{
+    "username": "replace_with_developer",
+    "user_groups": "developers",
+    "user_public_key": "ssh-rsa AAAA...your-key",
+    "admin_username": "replace_with_admin",
+    "admin_password": "password",
+    "output_path": "ol9-cloud-init/{{ cookiecutter.username }}"
+  }
